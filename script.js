@@ -1,4 +1,5 @@
-const botaoIniciar = document.getElementById("StartGame");
+//const botaoIniciar = document.getElementById("StartGame");
+const botaoIniciar = document.getElementById("iniciar");
 const cenario = document.getElementById("cenario");
 const vida = document.getElementById("vida");
 const pontos = document.getElementById("pontos");
@@ -17,14 +18,20 @@ const velocidadeTiro = 20;
 const velocidadeNaveInimigas = 6;
 
 let estaAtirando = false;
-let tiroAtual;
-let vidaAtual;
-let pontosAtual;
+//let tiroAtual;
+let tiroAtual = 0;
+//let vidaAtual;
+let vidaAtual = 100;
+//let pontosAtual;
+let pontosAtual = 0;
+
 let checaMoveNaveInimigas;
 let checaNaveInimigas;
+let checaMoveTiros;
 let checaMoveNave;
 let checaColisao
 let checaTiros;
+
 let posicaoHorizontal = larguraCenario / 2 - 50;
 let posicaoVertical = alturaCenario - alturaNave;
 let direcaoHorizontal = 0;
@@ -148,14 +155,14 @@ const naveInimigas = () => {
         const naveInimigas = document.querySelectorAll(".inimigo");
         for (let i = 0; i < naveInimigas.length; i++){
             if(naveInimigas[i]) {
-                let posicaoTopNavaInimiga = naveInimigas[i].offsetTop;
-                let posicaoleftNavaInimiga = naveInimigas[i].offsetLeft
-                posicaoTopNavaInimiga += velocidadeNaveInimigas;
-                naveInimigas[i].style.top = posicaoTopNavaInimiga + "px";
-                if(posicaoTopNavaInimiga > alturaCenario) {
+                let posicaoTopNaveInimiga = naveInimigas[i].offsetTop;
+                let posicaoleftNaveInimiga = naveInimigas[i].offsetLeft
+                posicaoTopNaveInimiga += velocidadeNaveInimigas;
+                naveInimigas[i].style.top = posicaoTopNaveInimiga + "px";
+                if(posicaoTopNaveInimiga > alturaCenario) {
                     vidaAtual -= 5;
                     vida.textContent = `Vida: ${vidaAtual}`;
-                    explosaoNaveInimigaDestruida(posicaoleftNavaInimiga);
+                    explosaoNaveInimigaDestruida(posicaoleftNaveInimiga);
                     if (vidaAtual <= 0){
                         gameOver();
                     }
@@ -165,6 +172,37 @@ const naveInimigas = () => {
             }   
         }
     }
+
+const colisao = () => {
+    const todasNavesInimigas = document.querySelectorAll(".inimigo");
+    const todosTiros = Document.querySelectorAll(".tiro");
+    todasNavesInimigas.forEach((naveInimiga) => {
+        todosTiros.forEach((tiro) => {
+            const colisaoNaveInimiga = naveInimiga.getBoundingClientRect();
+            const colisaoTiro = tiro.getBoundingClientRect();
+            const posicaoNaveInimigaLeft = naveInimiga.offsetLeft;
+            const posicaoNaveInimigaTop = naveInimiga.offsetTop;
+            let vidaAtualNaveInimiga = parseInt(naveInimiga.getAttribute("data-vida"));
+            if (
+            colisaoNaveInimiga.left < colisaoTiro.right &&
+            colisaoNaveInimiga.right > colisaoTiro.left &&
+            colisaoNaveInimiga.top < colisaoTiro.bottom &&
+            colisaoNaveInimiga.bottom > colisaoTiro.top
+            ) {
+                vidaAtualNaveInimiga--;
+                tiro.remove();
+                if (vidaAtualNaveInimiga === 0) {
+                  pontosAtual += 10;
+                  pontos.textContent = `Pontos: ${pontosAtual}`;
+                  naveInimiga.remove();
+                  naveInimigaDestruida(posicaoNaveInimigaLeft, posicaoNaveInimigaTop);
+                } else {
+                      naveInimiga.setAttribute("data-vida", vidaAtualNaveInimiga);
+                }
+            }
+        })
+    })
+}
 
 const NaveInimigaDestruida = (posicaoleftNavaInimiga, posicaoTopNavaInimiga) => {
     const NaveInimigaDestruida = document.createElement("div")
@@ -212,20 +250,48 @@ const audioExplosoes = () => {
      })
 }
 
-const colisao = () => {
-    const todasNavesInimigas = document.querySelectorAll(".inimigo");
-    const todosTiros = Document.querySelectorAll(".tiro");
-    todasNavesInimigas.forEach((naveInimiga) => {
-        todosTiros.forEach((tiro) => {
-            const colisaoNaveInimiga = naveInimiga.getBoundingClientRect();
-            const colisaoTiro = tiro.getBoundingClientRect();
-            const posicaoNaveInimigaLeft = naveInimiga.offsetLeft;
-            const posicaoNaveInimigaTop = naveInimiga.offsetTop;
-            let vidaAtualNave
-        })
-        
-    }
+const gameOver = () => {
+  document.removeEventListener("keydown", teclaPressionada);
+  document.removeEventListener("keyup", teclaSolta);
+  clearInterval(checaMoveNaveInimigas);
+  clearInterval(checaNaveInimigas);
+  clearInterval(checaMoveTiros);
+  clearInterval(checaMoveNave);
+  clearInterval(checaColisao);
+  const perdeu = document.createElement("div");
+  perdeu.style.position = "absolute";
+  perdeu.innerHTML = "Fim de Jogo";
+  perdeu.style.backgroundColor = "black";
+  perdeu.style.color = "red";
+  perdeu.style.left = "50%";
+  perdeu.style.top = "50%";
+  perdeu.style.padding = "10px 20px";
+  perdeu.style.borderRadius = "5px";
+  perdeu.style.transform = "translate(-50%, -50%)";
+  cenario.appendChild(perdeu);
+  cenario.removeChild(nave);
+  cenario.style.animation = "none";
+  const navesInimigas = document.querySelectorAll(".inimigo");
+  navesInimigas.forEach((inimigos) => {
+    inimigos.remove();
+  });
+  const todosTiros = document.querySelectorAll(".tiro");
+  todosTiros.forEach((tiro) => {
+    cenario.removeChild(tiro);
+  });
 }
 
-
-9]
+const iniciarJogo = () => {
+  document.addEventListener("keydown", teclaPressionada);
+  document.addEventListener("keyup", teclaSolta);
+  checaMoveNave = setInterval(moveNave, 50);
+  checaMoveTiros = setInterval(moveTiros, 50);
+  checaMoveNaveInimigas = setInterval(moveNaveInimigas, 50);
+  checaColisao = setInterval(colisao, 10);
+  checaNaveInimigas = setInterval(naveInimigas, 1000);
+  checaTiros = setInterval(atirar, 10);
+  botaoIniciar.style.display = "none";
+  cenario.style.animation = "animarCenario 10s infinite linear";
+  audioJogo.loop = true;
+  audioJogo.play();
+}
